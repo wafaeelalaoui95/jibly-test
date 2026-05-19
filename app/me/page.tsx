@@ -58,7 +58,7 @@ export default function MyPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+ useEffect(() => {
     if (authLoading) return;
     if (!user) {
       setDataLoading(false);
@@ -66,36 +66,41 @@ export default function MyPage() {
     }
     let cancelled = false;
     setDataLoading(true);
-    Promise.all([
-      browser.listMyRequests(user.id),
-      browser.listMyTrips(user.id),
-      browser.listMyMatches(user.id),
+    setError(null);
+
+    // Safety: never freeze even if one Supabase query hangs forever.
+    const safetyTimeout = setTimeout(() => {
+      if (!cancelled) setDataLoading(false);
+    }, 6000);
+
+    const withTimeout = <T,>(p: Promise<T>, fallback: T, ms = 5000): Promise<T> =>
+      Promise.race([
+        p.catch(() => fallback),
+        new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+      ]);
+
+    Promise.allSettled([
+      withTimeout(browser.listMyRequests(user.id), [] as ShippingRequestRow[]),
+      withTimeout(browser.listMyTrips(user.id), [] as TravelerTripRow[]),
+      withTimeout(browser.listMyMatches(user.id), [] as MatchRow[]),
     ])
-      .then(([r, tr, m]) => {
+      .then(([rRes, trRes, mRes]) => {
         if (cancelled) return;
-        setRequests(r);
-        setTrips(tr);
-        setMatches(m as MatchWithRefs[]);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err.message ?? t.auth_error_generic);
+        if (rRes.status === 'fulfilled') setRequests(rRes.value);
+        if (trRes.status === 'fulfilled') setTrips(trRes.value);
+        if (mRes.status === 'fulfilled') setMatches(mRes.value as MatchWithRefs[]);
       })
       .finally(() => {
         if (cancelled) return;
+        clearTimeout(safetyTimeout);
         setDataLoading(false);
       });
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      clearTimeout(safetyTimeout);
+    };
   }, [user, authLoading, t.auth_error_generic]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-ink-300 animate-spin" />
-      </div>
-    );
-  }
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-5">
