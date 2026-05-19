@@ -161,14 +161,14 @@ export async function listMyMatches(
   supabase: SB,
   userId: string
 ): Promise<MatchRow[]> {
-  // RLS already filters to matches where the user is one of the parties.
-  // We just need to fetch all matches; the relevant joins happen in app code.
+  // No joins to avoid nested RLS evaluation that can stall the request.
   const { data, error } = await supabase
     .from('matches')
-    .select('*, traveler_trip:traveler_trips(*), shipping_request:shipping_requests(*)')
-    .order('created_at', { ascending: false });
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
   if (error) throw error;
-  return (data as any) ?? [];
+  return data ?? [];
 }
 
 export async function createMatch(
