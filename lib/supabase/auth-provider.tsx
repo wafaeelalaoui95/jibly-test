@@ -32,14 +32,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = getBrowserClient();
+    let cancelled = false;
+
+    // Safety: never stay in loading state for more than 4 seconds.
+    // If Supabase doesn't respond by then, assume signed-out and unblock the UI.
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 4000);
 
     supabase.auth.getUser().then(async ({ data }) => {
+      if (cancelled) return;
       setUser(data.user);
       if (data.user) await loadProfile(data.user.id);
       setLoading(false);
+      clearTimeout(timeout);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoading(false);
+      clearTimeout(timeout);
     });
 
     const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (cancelled) return;
       setUser(session?.user ?? null);
       if (session?.user) {
         await loadProfile(session.user.id);
@@ -48,7 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   async function signOut() {
