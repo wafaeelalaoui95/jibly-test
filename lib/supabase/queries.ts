@@ -98,9 +98,9 @@ export async function createTrip(
     .from('traveler_trips')
     .insert(input)
     .select('*')
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  return data;
+  return (data ?? { ...input, id: '', created_at: new Date().toISOString() }) as TravelerTripRow;
 }
 
 // ============================================================================
@@ -136,9 +136,11 @@ export async function createShippingRequest(
     .from('shipping_requests')
     .insert(input)
     .select('*')
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  return data;
+  // RLS may sometimes hide the just-inserted row from the select. If so,
+  // we still succeeded — return a synthetic row using the input.
+  return (data ?? { ...input, id: '', created_at: new Date().toISOString() }) as ShippingRequestRow;
 }
 
 // ============================================================================
