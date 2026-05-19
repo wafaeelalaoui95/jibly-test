@@ -50,7 +50,24 @@ export function Navbar() {
             <LanguageSwitcher />
 
             {loading ? (
-              <div className="w-8 h-8" />
+              <>
+                <Link
+                  href="/login"
+                  className="px-3 py-2 text-[15px] font-medium text-ink-400 hover:text-ink-600 transition-colors"
+                >
+                  {t.auth_login_btn}
+                </Link>
+                <form action="/auth/sign-out" method="post">
+                  <button
+                    type="submit"
+                    className="p-2 text-ink-400 hover:text-ink-600 transition-colors"
+                    aria-label={t.auth_logout}
+                    title={t.auth_logout}
+                  >
+                    <LogOut className="w-[18px] h-[18px]" />
+                  </button>
+                </form>
+              </>
             ) : user ? (
               <>
                 <Link
