@@ -110,6 +110,8 @@ export type Translations = {
   trip_space_title: string;
   trip_label_min_comp: string;
   trip_min_comp_hint: string;
+  trip_accepted_categories_label: string;
+  trip_accepted_categories_hint: string;
   trip_identity_title: string;
   trip_identity_subtitle: string;
   trip_identity_benefit_1: string;
@@ -131,6 +133,15 @@ export type Translations = {
   matches_subtitle: string;
   matches_empty_title: string;
   matches_empty_text: string;
+  matches_empty_filtered: string;
+  matches_total: string;
+  matches_filters: string;
+  matches_filter_from: string;
+  matches_filter_to: string;
+  matches_filter_before: string;
+  matches_filter_max_price: string;
+  matches_filter_verified: string;
+  matches_filter_clear: string;
   matches_publish_btn: string;
   matches_from: string;
   matches_to: string;
@@ -339,6 +350,16 @@ export type Translations = {
   auth_signup_link: string;
   auth_login_link: string;
   auth_logout: string;
+  account_danger_zone: string;
+  account_delete_title: string;
+  account_delete_text: string;
+  account_delete_btn: string;
+  account_delete_confirm_title: string;
+  account_delete_confirm_text: string;
+  account_delete_confirm_btn: string;
+  account_delete_cancel: string;
+  account_delete_typing_label: string;
+  account_delete_typing_placeholder: string;
   auth_error_generic: string;
   auth_login_required: string;
   loading: string;
@@ -438,6 +459,8 @@ export const translations: Record<Locale, Translations> = {
     trip_space_title: 'Que pouvez-vous transporter ?',
     trip_label_min_comp: 'Compensation minimum acceptée',
     trip_min_comp_hint: 'L\'expéditeur peut proposer plus. Vous êtes libre de refuser.',
+    trip_accepted_categories_label: 'Ce que vous acceptez de transporter',
+    trip_accepted_categories_hint: 'Sélectionnez ce avec quoi vous êtes à l\'aise. Vous pourrez toujours refuser à la livraison.',
     trip_identity_title: 'Vérifier votre identité',
     trip_identity_subtitle: 'Optionnel mais recommandé. Les profils vérifiés reçoivent 3× plus de demandes.',
     trip_identity_benefit_1: 'Badge "Identité vérifiée" sur votre profil',
@@ -458,6 +481,15 @@ export const translations: Record<Locale, Translations> = {
     matches_subtitle: 'personnes prêtes à aider.',
     matches_empty_title: 'Aucun voyageur pour le moment',
     matches_empty_text: 'Publiez votre demande, on vous prévient dès qu\'un voyageur passe.',
+    matches_empty_filtered: 'Aucun voyageur ne correspond à ces filtres. Essayez d\'élargir.',
+    matches_total: 'au total',
+    matches_filters: 'Filtres',
+    matches_filter_from: 'Départ',
+    matches_filter_to: 'Arrivée',
+    matches_filter_before: 'Avant le',
+    matches_filter_max_price: 'Budget max',
+    matches_filter_verified: 'Identité vérifiée',
+    matches_filter_clear: 'Effacer les filtres',
     matches_publish_btn: 'Publier ma demande',
     matches_from: 'Départ',
     matches_to: 'Arrivée',
@@ -656,6 +688,16 @@ export const translations: Record<Locale, Translations> = {
     auth_signup_link: 'Créer un compte',
     auth_login_link: 'Se connecter',
     auth_logout: 'Se déconnecter',
+    account_danger_zone: 'Zone sensible',
+    account_delete_title: 'Supprimer mon compte',
+    account_delete_text: 'Cette action est définitive. Vos trajets, demandes et messages seront supprimés.',
+    account_delete_btn: 'Supprimer mon compte',
+    account_delete_confirm_title: 'Vraiment supprimer votre compte ?',
+    account_delete_confirm_text: 'Pour confirmer, tapez',
+    account_delete_confirm_btn: 'Oui, supprimer définitivement',
+    account_delete_cancel: 'Annuler',
+    account_delete_typing_label: 'Tapez le mot ci-dessus pour confirmer',
+    account_delete_typing_placeholder: 'supprimer',
     auth_error_generic: 'Une erreur est survenue. Réessayez.',
     auth_login_required: 'Connectez-vous pour accéder à cette page.',
     loading: 'Chargement…',
@@ -754,6 +796,8 @@ export const translations: Record<Locale, Translations> = {
     trip_space_title: 'What can you carry?',
     trip_label_min_comp: 'Minimum compensation accepted',
     trip_min_comp_hint: 'Senders can offer more. You\'re free to decline.',
+    trip_accepted_categories_label: 'What you\'re willing to carry',
+    trip_accepted_categories_hint: 'Pick what you\'re comfortable with. You can always decline at handover.',
     trip_identity_title: 'Verify your identity',
     trip_identity_subtitle: 'Optional but recommended. Verified profiles get 3× more requests.',
     trip_identity_benefit_1: '"Verified" badge on your profile',
@@ -774,6 +818,15 @@ export const translations: Record<Locale, Translations> = {
     matches_subtitle: 'people ready to help.',
     matches_empty_title: 'No travelers right now',
     matches_empty_text: 'Post your request — we\'ll notify you as soon as someone matches.',
+    matches_empty_filtered: 'No traveler matches these filters. Try widening them.',
+    matches_total: 'total',
+    matches_filters: 'Filters',
+    matches_filter_from: 'From',
+    matches_filter_to: 'To',
+    matches_filter_before: 'Before',
+    matches_filter_max_price: 'Max budget',
+    matches_filter_verified: 'Verified ID',
+    matches_filter_clear: 'Clear filters',
     matches_publish_btn: 'Post my request',
     matches_from: 'From',
     matches_to: 'To',
@@ -972,6 +1025,16 @@ export const translations: Record<Locale, Translations> = {
     auth_signup_link: 'Create account',
     auth_login_link: 'Sign in',
     auth_logout: 'Sign out',
+    account_danger_zone: 'Danger zone',
+    account_delete_title: 'Delete my account',
+    account_delete_text: 'This is permanent. Your trips, requests and messages will be removed.',
+    account_delete_btn: 'Delete my account',
+    account_delete_confirm_title: 'Really delete your account?',
+    account_delete_confirm_text: 'To confirm, type',
+    account_delete_confirm_btn: 'Yes, delete permanently',
+    account_delete_cancel: 'Cancel',
+    account_delete_typing_label: 'Type the word above to confirm',
+    account_delete_typing_placeholder: 'delete',
     auth_error_generic: 'Something went wrong. Try again.',
     auth_login_required: 'Sign in to access this page.',
     loading: 'Loading…',

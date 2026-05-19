@@ -60,7 +60,15 @@ export async function updateProfile(
 
 export async function listOpenTrips(
   supabase: SB,
-  filters?: { departureCity?: string; arrivalCity?: string; limit?: number }
+  filters?: {
+    departureCity?: string;
+    arrivalCity?: string;
+    /** ISO date string — only trips on or before this date */
+    maxDate?: string;
+    /** Only trips with compensation_min <= this budget */
+    maxBudget?: number;
+    limit?: number;
+  }
 ): Promise<(TravelerTripRow & { profile: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'verification_level' | 'rating' | 'trips_completed'> | null })[]> {
   let q = supabase
     .from('traveler_trips')
@@ -74,6 +82,8 @@ export async function listOpenTrips(
 
   if (filters?.departureCity) q = q.ilike('departure_city', `%${filters.departureCity}%`);
   if (filters?.arrivalCity) q = q.ilike('arrival_city', `%${filters.arrivalCity}%`);
+  if (filters?.maxDate) q = q.lte('departure_date', filters.maxDate);
+  if (filters?.maxBudget != null) q = q.lte('compensation_min', filters.maxBudget);
 
   const { data, error } = await q;
   if (error) throw error;

@@ -4,12 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowLeft, ArrowRight, Upload, Plane, Loader2 } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Upload, Plane, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, Input } from '@/components/ui/Form';
 import { Stepper } from '@/components/ui/Stepper';
 import { LocationSelector, type LocationValue } from '@/components/ui/LocationSelector';
-import { SPACE_OPTIONS } from '@/lib/constants';
+import { SPACE_OPTIONS, ITEM_CATEGORIES } from '@/lib/constants';
 import { useI18n } from '@/lib/i18n/context';
 import { useAuth } from '@/lib/supabase/auth-provider';
 import { browser } from '@/lib/supabase/queries';
@@ -33,13 +33,20 @@ export default function VoyagerPage() {
 
   const [space, setSpace] = useState<AvailableSpace | null>(null);
   const [minComp, setMinComp] = useState(20);
+  const [acceptedCategories, setAcceptedCategories] = useState<string[]>([]);
+
+  function toggleCategory(value: string) {
+    setAcceptedCategories((prev) =>
+      prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]
+    );
+  }
 
   const [idFile, setIdFile] = useState<File | null>(null);
   const [terms, setTerms] = useState(false);
 
   const canNext = () => {
     if (step === 0) return from && to && date;
-    if (step === 1) return space && minComp >= 0;
+    if (step === 1) return space && minComp >= 0 && acceptedCategories.length > 0;
     if (step === 2) return true;
     if (step === 3) return terms;
     return false;
@@ -67,7 +74,7 @@ export default function VoyagerPage() {
         available_weight_kg: null,
         available_space: space,
         flight_time: time || null,
-        notes: null,
+        notes: JSON.stringify({ accepted_categories: acceptedCategories }),
         status: 'open',
       });
       setSubmitted(true);
@@ -173,6 +180,43 @@ export default function VoyagerPage() {
                         <div className="text-[12px] text-ink-400 mt-0.5">{t[s.sizeKey]}</div>
                       </button>
                     ))}
+                  </div>
+
+                  {/* Accepted item categories (multi-select) */}
+                  <div>
+                    <div className="mb-3">
+                      <label className="block text-[14px] font-semibold text-ink-500">
+                        {t.trip_accepted_categories_label}
+                      </label>
+                      <p className="text-[13px] text-ink-400 mt-1">
+                        {t.trip_accepted_categories_hint}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {ITEM_CATEGORIES.map((c) => {
+                        const active = acceptedCategories.includes(c.value);
+                        return (
+                          <button
+                            key={c.value}
+                            type="button"
+                            onClick={() => toggleCategory(c.value)}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-start transition-all ${
+                              active
+                                ? 'border-lavender-500 bg-lavender-50'
+                                : 'border-ink-100 bg-white hover:border-ink-300'
+                            }`}
+                          >
+                            <span className="text-xl flex-shrink-0">{c.icon}</span>
+                            <span className={`text-[14px] font-medium ${active ? 'text-lavender-700' : 'text-ink-500'}`}>
+                              {t[c.labelKey]}
+                            </span>
+                            {active && (
+                              <CheckCircle2 className="w-4 h-4 text-lavender-500 ml-auto flex-shrink-0" strokeWidth={2.5} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div>

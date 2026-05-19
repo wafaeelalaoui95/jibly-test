@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { Plane, Star, Clock, MessageCircle, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plane, Star, Clock, MessageCircle, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { VerificationBadge } from '@/components/ui/Badge';
 import { formatShortDate } from '@/lib/utils';
@@ -23,11 +23,19 @@ export default function MatchesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [fromFilter, setFromFilter] = useState('');
+  const [toFilter, setToFilter] = useState('');
+  const [maxDate, setMaxDate] = useState('');
+  const [maxBudget, setMaxBudget] = useState<number | ''>('');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     browser
-      .listOpenTrips({ limit: 30 })
+      .listOpenTrips({ limit: 50 })
       .then((data) => {
         if (cancelled) return;
         setTrips(data as TripWithProfile[]);
@@ -43,6 +51,28 @@ export default function MatchesPage() {
     return () => { cancelled = true; };
   }, [t.auth_error_generic]);
 
+  // Client-side filtering — keeps UX snappy.
+  const filteredTrips = useMemo(() => {
+    return trips.filter((tv) => {
+      if (fromFilter && !tv.departure_city.toLowerCase().includes(fromFilter.toLowerCase())) return false;
+      if (toFilter && !tv.arrival_city.toLowerCase().includes(toFilter.toLowerCase())) return false;
+      if (maxDate && tv.departure_date > maxDate) return false;
+      if (maxBudget !== '' && tv.compensation_min > Number(maxBudget)) return false;
+      if (verifiedOnly && tv.profile?.verification_level !== 'id_verified' && tv.profile?.verification_level !== 'trusted') return false;
+      return true;
+    });
+  }, [trips, fromFilter, toFilter, maxDate, maxBudget, verifiedOnly]);
+
+  const hasActiveFilters = !!fromFilter || !!toFilter || !!maxDate || maxBudget !== '' || verifiedOnly;
+
+  function resetFilters() {
+    setFromFilter('');
+    setToFilter('');
+    setMaxDate('');
+    setMaxBudget('');
+    setVerifiedOnly(false);
+  }
+
   return (
     <div className="min-h-screen py-12 lg:py-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
@@ -57,14 +87,112 @@ export default function MatchesPage() {
               {t.matches_title}
             </h1>
             <p className="text-lg text-ink-400">
-              <span className="font-semibold text-ink-600 num-display">{trips.length}</span>{' '}
+              <span className="font-semibold text-ink-600 num-display">{filteredTrips.length}</span>{' '}
               {t.matches_subtitle}
+              {hasActiveFilters && (
+                <span className="text-[14px] text-ink-300">
+                  {' '}· <span className="num-display">{trips.length}</span> {t.matches_total}
+                </span>
+              )}
             </p>
           </div>
-          <Link href={user ? '/envoyer' : '/login?next=/envoyer'}>
-            <Button size="sm">{t.matches_publish_btn}</Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full border text-[14px] font-medium transition-colors ${
+                showFilters || hasActiveFilters
+                  ? 'border-lavender-300 bg-lavender-50 text-lavender-700'
+                  : 'border-ink-100 hover:border-ink-200 text-ink-500'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              {t.matches_filters}
+              {hasActiveFilters && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-lavender-500 text-cream-50 text-[10px] font-bold ml-0.5">
+                  {[fromFilter, toFilter, maxDate, maxBudget !== '' ? '1' : '', verifiedOnly ? '1' : ''].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+            <Link href={user ? '/envoyer' : '/login?next=/envoyer'}>
+              <Button size="sm">{t.matches_publish_btn}</Button>
+            </Link>
+          </div>
         </motion.div>
+
+        {/* Filter bar */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-10 bg-white rounded-2xl p-5 border border-ink-100"
+          >
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div>
+                <label className="block text-[12px] font-medium text-ink-500 mb-1.5">{t.matches_filter_from}</label>
+                <input
+                  type="text"
+                  value={fromFilter}
+                  onChange={(e) => setFromFilter(e.target.value)}
+                  placeholder="Paris…"
+                  className="w-full px-3 py-2 rounded-lg bg-cream-50 border border-ink-100 text-[14px] focus:outline-none focus:ring-2 focus:ring-lavender-200"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-ink-500 mb-1.5">{t.matches_filter_to}</label>
+                <input
+                  type="text"
+                  value={toFilter}
+                  onChange={(e) => setToFilter(e.target.value)}
+                  placeholder="Casablanca…"
+                  className="w-full px-3 py-2 rounded-lg bg-cream-50 border border-ink-100 text-[14px] focus:outline-none focus:ring-2 focus:ring-lavender-200"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-ink-500 mb-1.5">{t.matches_filter_before}</label>
+                <input
+                  type="date"
+                  value={maxDate}
+                  onChange={(e) => setMaxDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-cream-50 border border-ink-100 text-[14px] focus:outline-none focus:ring-2 focus:ring-lavender-200"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-ink-500 mb-1.5">{t.matches_filter_max_price}</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={5}
+                  value={maxBudget}
+                  onChange={(e) => setMaxBudget(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="50"
+                  className="w-full px-3 py-2 rounded-lg bg-cream-50 border border-ink-100 text-[14px] focus:outline-none focus:ring-2 focus:ring-lavender-200"
+                />
+              </div>
+              <div className="flex flex-col justify-end">
+                <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-cream-50">
+                  <input
+                    type="checkbox"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    className="rounded accent-lavender-500"
+                  />
+                  <span className="text-[13px] text-ink-500 font-medium">{t.matches_filter_verified}</span>
+                </label>
+              </div>
+            </div>
+            {hasActiveFilters && (
+              <div className="flex justify-end mt-3 pt-3 border-t border-ink-50">
+                <button
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1.5 text-[13px] text-ink-400 hover:text-ink-600"
+                >
+                  <X className="w-3 h-3" />
+                  {t.matches_filter_clear}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -74,17 +202,25 @@ export default function MatchesPage() {
           <div className="bg-blush-50 rounded-2xl p-6 text-center text-blush-500 text-[14px] max-w-2xl mx-auto">
             {error}
           </div>
-        ) : trips.length === 0 ? (
+        ) : filteredTrips.length === 0 ? (
           <div className="bg-white rounded-2xl p-16 text-center border border-dashed border-ink-100 max-w-2xl mx-auto">
             <h2 className="text-xl font-bold text-ink-600 mb-3 tracking-[-0.015em]">{t.matches_empty_title}</h2>
-            <p className="text-[15px] text-ink-400 mb-8">{t.matches_empty_text}</p>
-            <Link href={user ? '/envoyer' : '/login?next=/envoyer'}>
-              <Button>{t.matches_publish_btn}</Button>
-            </Link>
+            <p className="text-[15px] text-ink-400 mb-8">
+              {hasActiveFilters ? t.matches_empty_filtered : t.matches_empty_text}
+            </p>
+            {hasActiveFilters ? (
+              <Button onClick={resetFilters} variant="outline">
+                {t.matches_filter_clear}
+              </Button>
+            ) : (
+              <Link href={user ? '/envoyer' : '/login?next=/envoyer'}>
+                <Button>{t.matches_publish_btn}</Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-            {trips.map((tv, i) => (
+            {filteredTrips.map((tv, i) => (
               <motion.article
                 key={tv.id}
                 initial={{ opacity: 0, y: 14 }}

@@ -40,29 +40,30 @@ export function HeroScene({ className = '' }: { className?: string }) {
           transition={{ duration: 1.4, delay: 0.1, ease: 'easeOut' }}
         />
 
-        {/* Soft trail behind the dashed path — gives the plane a "breath" */}
+        {/* Soft trail behind the dotted path — gives the plane a "breath".
+            A double-curve makes the trajectory more playful than a straight arc. */}
         <motion.path
-          d="M 80 400 Q 220 360 290 280 Q 350 220 410 170"
+          d="M 80 400 C 160 380 220 320 240 270 C 260 220 320 200 360 210 C 390 218 400 195 410 170"
           stroke="#D2C6FF"
-          strokeWidth="8"
+          strokeWidth="10"
           fill="none"
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.35 }}
-          transition={{ duration: 1.6, ease: 'easeOut', delay: 0.2 }}
+          animate={{ pathLength: 1, opacity: 0.28 }}
+          transition={{ duration: 1.8, ease: 'easeOut', delay: 0.2 }}
         />
 
-        {/* Dashed flight path — the actual trajectory */}
+        {/* Dotted flight path — perfect dots instead of dashes for a lighter, airier feel */}
         <motion.path
-          d="M 80 400 Q 220 360 290 280 Q 350 220 410 170"
+          d="M 80 400 C 160 380 220 320 240 270 C 260 220 320 200 360 210 C 390 218 400 195 410 170"
           stroke="#7458E8"
-          strokeWidth="2.5"
+          strokeWidth="3"
           fill="none"
-          strokeDasharray="6 7"
+          strokeDasharray="0.1 10"
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.9 }}
-          transition={{ duration: 1.8, ease: 'easeOut', delay: 0.3 }}
+          animate={{ pathLength: 1, opacity: 0.85 }}
+          transition={{ duration: 2.0, ease: 'easeOut', delay: 0.3 }}
         />
 
         {/* Starting point — lavender pulse */}

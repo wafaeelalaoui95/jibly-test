@@ -17,6 +17,9 @@ import {
   MapPin,
   ArrowRight,
   Loader2,
+  AlertTriangle,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge, VerificationBadge } from '@/components/ui/Badge';
@@ -488,6 +491,31 @@ function ProfileTab({
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Delete account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  const DELETE_CONFIRM_WORD = t.account_delete_typing_placeholder;
+
+  async function handleDeleteAccount() {
+    setDeleteErr(null);
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed');
+      }
+      // Hard reload to clear all client state
+      window.location.href = '/';
+    } catch (e: any) {
+      setDeleteErr(e.message ?? t.auth_error_generic);
+      setDeleting(false);
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!profile) return;
@@ -597,6 +625,118 @@ function ProfileTab({
           {t.me_profile_verify_now}
         </Button>
       </div>
+
+      {/* Danger zone — full-width, subtle, lives below the form. */}
+      <div className="lg:col-span-3 mt-4">
+        <div className="bg-blush-50/40 border border-blush-200/60 rounded-2xl p-7">
+          <div className="text-[11px] font-semibold text-blush-500 tracking-[0.12em] uppercase mb-4">
+            {t.account_danger_zone}
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="text-[16px] font-bold text-ink-600 tracking-[-0.01em] mb-1">
+                {t.account_delete_title}
+              </h3>
+              <p className="text-[14px] text-ink-400 leading-relaxed max-w-prose">
+                {t.account_delete_text}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setShowDeleteModal(true); setDeleteConfirm(''); setDeleteErr(null); }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium text-blush-500 border border-blush-200 hover:bg-blush-50 hover:border-blush-300 rounded-full transition-colors whitespace-nowrap"
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={1.75} />
+              {t.account_delete_btn}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-ink-600/40 backdrop-blur-sm"
+            onClick={() => !deleting && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 20, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: [0.04, 0.62, 0.23, 0.98] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-cream-50 rounded-3xl p-7 max-w-md w-full shadow-xl"
+            >
+              <div className="flex items-start justify-between mb-5">
+                <div className="w-11 h-11 rounded-full bg-blush-50 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-blush-500" strokeWidth={2} />
+                </div>
+                <button
+                  onClick={() => !deleting && setShowDeleteModal(false)}
+                  className="p-1.5 -mr-1 -mt-1 rounded-full hover:bg-ink-50 text-ink-400"
+                  disabled={deleting}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <h2 className="text-xl font-extrabold text-ink-600 tracking-[-0.015em] mb-3">
+                {t.account_delete_confirm_title}
+              </h2>
+              <p className="text-[15px] text-ink-400 leading-relaxed mb-6">
+                {t.account_delete_text}
+              </p>
+
+              <div className="mb-6">
+                <div className="text-[13px] text-ink-500 mb-2">
+                  {t.account_delete_confirm_text}{' '}
+                  <span className="font-bold text-ink-600 px-1.5 py-0.5 bg-cream-100 rounded">
+                    {DELETE_CONFIRM_WORD}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  placeholder={DELETE_CONFIRM_WORD}
+                  autoFocus
+                  disabled={deleting}
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-ink-100 text-[15px] focus:outline-none focus:ring-2 focus:ring-blush-200 focus:border-blush-300 transition-all disabled:opacity-50"
+                />
+              </div>
+
+              {deleteErr && (
+                <div className="rounded-xl bg-blush-50 px-4 py-3 text-[14px] text-blush-500 mb-5">
+                  {deleteErr}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 px-5 py-3 text-[14px] font-medium text-ink-500 hover:text-ink-600 bg-cream-100 hover:bg-cream-200 rounded-full transition-colors disabled:opacity-50"
+                >
+                  {t.account_delete_cancel}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || deleteConfirm.trim().toLowerCase() !== DELETE_CONFIRM_WORD.toLowerCase()}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-[14px] font-semibold text-cream-50 bg-blush-500 hover:bg-blush-600 disabled:bg-blush-200 disabled:cursor-not-allowed rounded-full transition-colors"
+                >
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t.account_delete_confirm_btn}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
